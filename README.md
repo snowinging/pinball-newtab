@@ -3,7 +3,15 @@
 一个可自定义的浏览器新标签页，拥有浮动弹珠风格的快捷工具：编辑器、终端、链接管理、便签、音乐播放器，目前仍在开发。
 项目中使用了AI
 
-
+## 使用截图
+![弹珠起始页](https://github.com/snowinging/pinball-newtab/blob/main/image/screenshot0.png)
+![弹珠尾迹](https://github.com/snowinging/pinball-newtab/blob/main/image/screenshot1.png)
+![音乐播放器](https://github.com/snowinging/pinball-newtab/blob/main/image/screenshot2.png)
+![入口自定义](https://github.com/snowinging/pinball-newtab/blob/main/image/screenshot3.png)
+![入口图标自定义](https://github.com/snowinging/pinball-newtab/blob/main/image/screenshot4.png)
+![终端](https://github.com/snowinging/pinball-newtab/blob/main/image/screenshot5.png)
+![html编辑器](https://github.com/snowinging/pinball-newtab/blob/main/image/screenshot6.png)
+![小纸条](https://github.com/snowinging/pinball-newtab/blob/main/image/screenshot7.png)
 ## 功能特性
 
 - **编辑器** — 实时预览当前页面的 HTML 代码
