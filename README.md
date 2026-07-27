@@ -23,18 +23,20 @@
 
 ## 安装方法
 
+解压文件并放置到适合的位置
+
 ### Firefox
 
 1. 打开 `about:debugging#/runtime/this-firefox`
 2. 点击「加载临时附加组件」
-3. 选择 `manifest.json`
+3. 选择文件夹中 `manifest.json`
 
 ### Chrome / Edge
 
 1. 打开 `chrome://extensions`
 2. 开启「开发者模式」
 3. 点击「加载已解压的扩展」
-4. 选择本项目所在文件夹
+4. 选择本项目所在文件夹或文件夹中`manifest.json`
 
 ## 使用方法
 
@@ -43,7 +45,6 @@
 - 在音乐弹珠上长按左键 0.2 秒可呼出快捷轮盘菜单
 - 点击「弹珠模式」让所有弹珠物理弹射
 - 弹珠运动中可右键抓取单个弹珠使其停下
-- `Ctrl+Shift+P` 可切换弹珠层显示（仅扩展版本）
 
 ## 终端服务器（可选）
 
@@ -57,7 +58,7 @@ python3 terminal_server.py
 ## 项目结构
 
 ```
-my-custom-newtab-extension/
+pinball-newtab/
 ├── manifest.json         # 浏览器扩展声明
 ├── index.html            # 新标签页入口
 ├── pinball.js            # 弹珠系统主逻辑
