@@ -1,0 +1,16 @@
+{
+  "manifest_version": 2,
+  "name": "Pinball New Tab",
+  "version": "1.0",
+  "description": "A customizable new tab page with bubble-style quick tools - editor, terminal, links, notes, music player and more.",
+  "chrome_url_overrides": {
+    "newtab": "index.html"
+  },
+  "content_security_policy": "script-src 'self' blob: https://cdnjs.cloudflare.com https://unpkg.com https://cdn.jsdelivr.net; object-src 'self'",
+  "permissions": ["storage"],
+  "web_accessible_resources": ["pinball.js"],
+  "icons": {
+    "48": "icon.png",
+    "96": "icon.png"
+  }
+}
