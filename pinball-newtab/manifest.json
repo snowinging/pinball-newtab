@@ -9,6 +9,16 @@
   "content_security_policy": "script-src 'self' blob: https://cdnjs.cloudflare.com https://unpkg.com https://cdn.jsdelivr.net; object-src 'self'",
   "permissions": ["storage"],
   "web_accessible_resources": ["pinball.js"],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "pinball-newtab@snowinging.github",
+      "strict_min_version": "91.0",
+      "data_collection_permissions": {
+        "required": ["none"],
+        "optional": []
+      }
+    }
+  },
   "icons": {
     "48": "icon.png",
     "96": "icon.png"

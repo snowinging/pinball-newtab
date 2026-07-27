@@ -1117,9 +1117,93 @@ ${note.content}`], { type: 'text/plain;charset=utf-8' });
   let currentTrack = -1;
   let isPlaying = false;
 
+  // ---- 本地音乐库（IndexedDB 永久存储） ----
+  const DB_NAME = 'PinballMusicDB';
+  const DB_VERSION = 1;
+  let db = null;
+
+  function openMusicDB() {
+    return new Promise((resolve, reject) => {
+      if (db) return resolve(db);
+      const req = indexedDB.open(DB_NAME, DB_VERSION);
+      req.onupgradeneeded = (e) => {
+        const d = e.target.result;
+        if (!d.objectStoreNames.contains('files')) {
+          d.createObjectStore('files', { keyPath: 'id' });
+        }
+      };
+      req.onsuccess = (e) => { db = e.target.result; resolve(db); };
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  function saveLocalFile(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const db = await openMusicDB();
+        const tx = db.transaction('files', 'readwrite');
+        const store = tx.objectStore('files');
+        const record = {
+          id: 'local_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
+          name: file.name.replace(/\.[^.]+$/, ''),
+          data: reader.result,
+          type: file.type,
+          size: file.size,
+          addedAt: Date.now(),
+        };
+        store.put(record);
+        tx.oncomplete = () => resolve(record);
+        tx.onerror = () => reject(tx.error);
+      };
+      reader.onerror = () => reject(reader.error);
+      reader.readAsArrayBuffer(file);
+    });
+  }
+
+  function deleteLocalFile(id) {
+    return new Promise(async (resolve, reject) => {
+      const db = await openMusicDB();
+      const tx = db.transaction('files', 'readwrite');
+      tx.objectStore('files').delete(id);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  }
+
+  function getAllLocalFiles() {
+    return new Promise(async (resolve, reject) => {
+      const db = await openMusicDB();
+      const tx = db.transaction('files', 'readonly');
+      const req = tx.objectStore('files').getAll();
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  function isLocalUrl(url) { return url && url.startsWith('local_'); }
+
   function loadMusicList() {
     try { musicList = JSON.parse(localStorage.getItem('my_music_list')) || []; }
     catch { musicList = []; }
+    // 过滤掉失效的本地 blob URL
+    musicList = musicList.filter(t => !t.url || !t.url.startsWith('blob:'));
+    // 从 IndexedDB 加载本地文件
+    getAllLocalFiles().then(files => {
+      files.forEach(f => {
+        const blob = new Blob([f.data], { type: f.type || 'audio/mpeg' });
+        const url = URL.createObjectURL(blob);
+        // 检查是否已在列表中
+        if (!musicList.some(t => t.id === f.id)) {
+          musicList.push({ id: f.id, name: f.name, url: url, local: true });
+        } else {
+          // 更新已有条目的 URL（blob URL 在刷新后失效）
+          const existing = musicList.find(t => t.id === f.id);
+          if (existing) existing.url = url;
+        }
+      });
+      saveMusicList(); renderMusicList();
+    }).catch(() => {});
     if (musicList.length === 0) {
       musicList = [
         { name: '示例音乐', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },
@@ -1143,7 +1227,7 @@ ${note.content}`], { type: 'text/plain;charset=utf-8' });
       item.className = 'ml-item' + (i === currentTrack ? ' active' : '');
       item.innerHTML = `
         <span class="ml-index">${i + 1}</span>
-        <span class="ml-name">${t.name}</span>
+        <span class="ml-name">${t.name}${t.local ? ' <span style="color:#6c7086;font-size:10px;">[本地]</span>' : ''}</span>
         <button class="ml-del" data-mdel="${i}">✕</button>`;
       item.addEventListener('click', (e) => {
         if (e.target.closest('.ml-del')) return;
@@ -1155,6 +1239,11 @@ ${note.content}`], { type: 'text/plain;charset=utf-8' });
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
         const i = parseInt(btn.dataset.mdel);
+        const track = musicList[i];
+        // 本地文件同步从 IndexedDB 删除
+        if (track && track.local && track.id) {
+          deleteLocalFile(track.id);
+        }
         musicList.splice(i, 1);
         if (currentTrack === i) { stopTrack(); currentTrack = -1; }
         else if (currentTrack > i) currentTrack--;
@@ -1404,14 +1493,15 @@ ${note.content}`], { type: 'text/plain;charset=utf-8' });
   document.getElementById('mc-file').addEventListener('click', () => {
     document.getElementById('mc-file-input').click();
   });
-  document.getElementById('mc-file-input').addEventListener('change', (e) => {
+  document.getElementById('mc-file-input').addEventListener('change', async (e) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
-    Array.from(files).forEach(file => {
-      const url = URL.createObjectURL(file);
-      let name = document.getElementById('mc-name').value.trim() || file.name.replace(/\.[^.]+$/, '');
-      musicList.push({ name, url });
-    });
+    for (const file of files) {
+      const record = await saveLocalFile(file);
+      const url = URL.createObjectURL(new Blob([record.data], { type: file.type || 'audio/mpeg' }));
+      let name = document.getElementById('mc-name').value.trim() || record.name;
+      musicList.push({ id: record.id, name, url, local: true });
+    }
     saveMusicList(); renderMusicList();
     document.getElementById('mc-name').value = '';
     e.target.value = '';
